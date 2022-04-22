@@ -19,8 +19,6 @@ func main() {
 
 	fmt.Println("Testing")
 	url := "https://www.hl7.org/fhir/resourcelist.html"
-	fmt.Println(url)
-
 	resp, err := http.Get(url)
 
 	checkErr(err)
@@ -40,16 +38,20 @@ func main() {
 	// fmt.Println(content)
 
 	var resources []FhirResource
-	doc.Find("div #tabs-1 .frm-group .rotate div").Each(func(i int, s *goquery.Selection) {
-		// modules, err := s.Find("td").Html()
-		// checkerr(err)
-		// fmt.Println(modules)
-		fmt.Print(s.Text())
+	doc.Find("div #tabs-1 .frm-group").Each(func(i int, root *goquery.Selection) {
 		var resource FhirResource
-		resource.Module = s.Text()
 
-		resources = append(resources, resource)
+		mod, err := root.Find(".frm-group .rotate div").Html()
+		checkErr(err)
+		resource.Module = mod
+
+		root.Find(".frm-category").Each(func(i int, s *goquery.Selection) {
+			resource.Category = s.Text()
+			resources = append(resources, resource)
+		})
 	})
+
+	fmt.Println(resources)
 }
 
 func checkErr(err error) {
