@@ -3,16 +3,18 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gocarina/gocsv"
 )
 
 type FhirResource struct {
-	Module       string
-	Category     string
-	Resource     string
-	ResourceDesc string
-	Url          string
+	Module       string `csv:"Module"`
+	Category     string `csv:"Category"`
+	Resource     string `csv:"Resource"`
+	ResourceDesc string `csv:"ResourceDesc"`
+	Url          string `csv:"Url"`
 }
 
 func main() {
@@ -20,18 +22,19 @@ func main() {
 	fmt.Println("Testing")
 	url := "https://www.hl7.org/fhir/resourcelist.html"
 	resp, err := http.Get(url)
-
 	checkErr(err)
-
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		fmt.Print("Couldnt fetch data from web. ")
-		fmt.Println("Error code was", resp.Status)
+		panic(fmt.Sprint("Expected data not received. Error code was ", resp.Status))
 	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	checkErr(err)
+
+	resFile, err := os.OpenFile("fhir_resources.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	checkErr(err)
+	defer resFile.Close()
 
 	// baseurl is prefixed to each Resource URL in struct
 	// <meta name="author" content="http://hl7.org/fhir">
@@ -84,6 +87,8 @@ func main() {
 		fmt.Printf("Res: %s ", resources[i].Resource)
 		fmt.Printf("Url: %s\n", resources[i].Url)
 	}
+	err = gocsv.MarshalFile(&resources, resFile)
+	checkErr(err)
 }
 
 func checkErr(err error) {

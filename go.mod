@@ -5,5 +5,6 @@ go 1.18
 require (
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/gocarina/gocsv v0.0.0-20220422102445-f48ffd81e276
 	golang.org/x/net v0.0.0-20210916014120-12bc252f5db8 // indirect
 )
