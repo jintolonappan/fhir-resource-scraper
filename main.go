@@ -33,25 +33,57 @@ func main() {
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	checkErr(err)
 
-	// content, err := doc.Find("div #tabs-1").Html()
-	// checkerr(err)
-	// fmt.Println(content)
+	// baseurl is prefixed to each Resource URL in struct
+	// <meta name="author" content="http://hl7.org/fhir">
+	baseurl, _ := doc.Find("meta[name=author]").Attr("content")
+	baseurl += "/"
 
 	var resources []FhirResource
-	doc.Find("div #tabs-1 .frm-group").Each(func(i int, root *goquery.Selection) {
+	var modules []string
+	var categories []string
+
+	// Module Count to fetch array element
+	mc := -1
+
+	// Category count to fetch array element
+	cc := 0
+
+	doc.Find("div #tabs-1>table>tbody>tr").Each(func(i int, root *goquery.Selection) {
 		var resource FhirResource
 
-		mod, err := root.Find(".frm-group .rotate div").Html()
+		mod, err := root.Find("td.frm-group>div").Html()
 		checkErr(err)
 		resource.Module = mod
+		modules = append(modules, mod)
 
-		root.Find(".frm-category").Each(func(i int, s *goquery.Selection) {
+		root.Find("tr.frm-group>td.frm-category").Each(func(i int, s *goquery.Selection) {
 			resource.Category = s.Text()
-			resources = append(resources, resource)
+			categories = append(categories, s.Text())
 		})
-	})
 
-	fmt.Println(resources)
+		root.Find("tr.frm-contents>td.frm-set").Each(func(i int, s *goquery.Selection) {
+			s.Find("li a").Each(func(i int, s *goquery.Selection) {
+				if len(s.Text()) > 2 {
+					thisresource := s.Text()
+					resource.Module = modules[mc]
+					resource.Category = categories[cc]
+					resource.Resource = thisresource
+					resource.ResourceDesc, _ = s.Attr("title")
+					resource.Url, _ = s.Attr("href")
+					resource.Url = baseurl + resource.Url
+					resources = append(resources, resource)
+				}
+			})
+			cc++
+		})
+		mc++
+	})
+	for i := range resources {
+		fmt.Printf("Module: %s ", resources[i].Module)
+		fmt.Printf("Cat: %s ", resources[i].Category)
+		fmt.Printf("Res: %s ", resources[i].Resource)
+		fmt.Printf("Url: %s\n", resources[i].Url)
+	}
 }
 
 func checkErr(err error) {
