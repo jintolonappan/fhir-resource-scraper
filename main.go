@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocarina/gocsv"
@@ -18,8 +19,6 @@ type FhirResource struct {
 }
 
 func main() {
-
-	fmt.Println("Testing")
 	url := "https://www.hl7.org/fhir/resourcelist.html"
 	resp, err := http.Get(url)
 	checkErr(err)
@@ -66,12 +65,14 @@ func main() {
 
 		root.Find("tr.frm-contents>td.frm-set").Each(func(i int, s *goquery.Selection) {
 			s.Find("li a").Each(func(i int, s *goquery.Selection) {
-				if len(s.Text()) > 2 {
-					thisresource := s.Text()
+				resname := strings.TrimSpace(s.Text())
+				if len(resname) > 2 { // This is the Resource Name
+					thisresource := resname
 					resource.Module = modules[mc]
 					resource.Category = categories[cc]
 					resource.Resource = thisresource
 					resource.ResourceDesc, _ = s.Attr("title")
+					resource.ResourceDesc = strings.ReplaceAll(resource.ResourceDesc, "\n", "")
 					resource.Url, _ = s.Attr("href")
 					resource.Url = baseurl + resource.Url
 					resources = append(resources, resource)
