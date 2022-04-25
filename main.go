@@ -11,11 +11,12 @@ import (
 )
 
 type FhirResource struct {
-	Module       string `csv:"Module"`
-	Category     string `csv:"Category"`
-	Resource     string `csv:"Resource"`
-	ResourceDesc string `csv:"ResourceDesc"`
-	Url          string `csv:"Url"`
+	Module       string
+	Category     string
+	Maturity     string `csv:"Normative/Maturity"`
+	Resource     string
+	ResourceDesc string
+	Url          string
 }
 
 func main() {
@@ -66,7 +67,7 @@ func main() {
 		root.Find("tr.frm-contents>td.frm-set").Each(func(i int, s *goquery.Selection) {
 			s.Find("li a").Each(func(i int, s *goquery.Selection) {
 				resname := strings.TrimSpace(s.Text())
-				if len(resname) > 2 { // This is the Resource Name
+				if len(resname) > 1 { // This is the Resource Name
 					thisresource := resname
 					resource.Module = modules[mc]
 					resource.Category = categories[cc]
@@ -76,6 +77,8 @@ func main() {
 					resource.Url, _ = s.Attr("href")
 					resource.Url = baseurl + resource.Url
 					resources = append(resources, resource)
+				} else if len(resname) == 1 {
+					resources[len(resources)-1].Maturity = resname
 				}
 			})
 			cc++
